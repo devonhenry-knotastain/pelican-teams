@@ -120,54 +120,53 @@
 </div>
 
 <script>
-  const webhookUrl = "https://n8n.knotastain.com/webhook-test/f6a078c6-67ec-4b15-8a6e-88e85b3fa666";
+const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
 
-  function startListening() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-US";
+async function sendToN8n() {
 
-    const status = document.getElementById("status");
-    status.innerHTML = "🔴 Listening...";
-    status.classList.add("listening");
+  const text = document.getElementById("textInput").value;
 
-    recognition.start();
+  document.getElementById("response").innerHTML = "Formatting with AI...";
 
-    recognition.onresult = function(event) {
-      const transcript = event.results[0][0].transcript;
-      document.getElementById("textInput").value = transcript;
+  try {
 
-      status.innerHTML = "✅ Speech captured";
-      status.classList.remove("listening");
-    };
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: text
+      })
+    });
 
-    recognition.onerror = function() {
-      status.innerHTML = "❌ Error during listening";
-      status.classList.remove("listening");
-    };
-  }
+    const data = await response.json();
 
-  async function sendToN8n() {
-    const text = document.getElementById("textInput").value;
+    // if AI returned JSON properly
+    let formattedText;
 
-    document.getElementById("response").innerHTML = "Sending...";
-
-    try {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
-      });
-
-      const data = await response.json();
-
-      document.getElementById("response").innerHTML =
-        "<strong>n8n Response:</strong><br>" +
-        JSON.stringify(data);
-
-    } catch (error) {
-      document.getElementById("response").innerHTML = "❌ Error sending to n8n";
+    if (typeof data === "string") {
+      formattedText = JSON.parse(data).text;
+    } else if (data.text) {
+      formattedText = data.text;
+    } else {
+      formattedText = JSON.stringify(data);
     }
+
+    document.getElementById("response").innerHTML =
+      "<strong>AI formatted message:</strong><br><br>" +
+      formattedText;
+
+    // optionally update textarea with AI version
+    document.getElementById("textInput").value = formattedText;
+
+  } catch (error) {
+
+    document.getElementById("response").innerHTML =
+      "❌ Error formatting message";
+
   }
+}
 </script>
 
 </body>
