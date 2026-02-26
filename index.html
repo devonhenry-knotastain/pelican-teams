@@ -1,12 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Free Website</title>
+  <title>Speech to n8n</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+      background: #f4f4f4;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #output {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Hello World 👋</h1>
-<p>This is my free website.</p>
+<h1>🎤 Speak to n8n</h1>
+
+<button onclick="startListening()">Start Speaking</button>
+
+<div id="output"></div>
+
+<script>
+  const webhookUrl = "http://localhost:5678/webhook/speech"; // CHANGE if needed
+
+  function startListening() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    recognition.onresult = async function(event) {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById("output").innerHTML = 
+        "<strong>You said:</strong> " + transcript;
+
+      // Send to n8n
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ text: transcript })
+        });
+
+        const data = await response.json();
+
+        document.getElementById("output").innerHTML += 
+          "<br><br><strong>n8n Response:</strong> " + 
+          JSON.stringify(data);
+
+      } catch (error) {
+        document.getElementById("output").innerHTML += 
+          "<br><br>❌ Error sending to n8n";
+      }
+    };
+
+    recognition.onerror = function(event) {
+      alert("Speech recognition error: " + event.error);
+    };
+  }
+</script>
 
 </body>
 </html>
