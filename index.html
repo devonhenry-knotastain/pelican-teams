@@ -1,84 +1,338 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Voice Notes Formatter - Batch Mode</title>
+  <title>Voice Notes Formatter</title>
+
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 40px; background: #f4f6f9; }
-    h1 { font-size: 42px; }
-    #status { font-size: 20px; height: 30px; margin-bottom: 10px; font-weight: bold; }
-    textarea { width: 70%; height: 140px; font-size: 18px; padding: 10px; margin-top: 15px; }
-    .box { background:white; padding:15px; border-radius:8px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); position: relative; text-align:left;}
-    .label { font-weight:bold; margin-bottom:5px; }
-    .copyBtn { position:absolute; top:10px; right:10px; background:#ffc107; color:black; padding:5px 10px; font-size:14px; border-radius:4px; cursor:pointer;}
-    .copyBtn:hover { background:#e0a800; }
-    #qr { margin-top: 30px; }
+
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 40px;
+      background: #f4f6f9;
+    }
+
+    h1 {
+      font-size: 42px;
+    }
+
+    #status {
+      font-size: 20px;
+      height: 30px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .listening {
+      color: red;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% {opacity:1;}
+      50% {opacity:0.4;}
+      100% {opacity:1;}
+    }
+
+    textarea {
+
+      width: 70%;
+      height: 140px;
+      font-size: 18px;
+      padding: 10px;
+      margin-top: 15px;
+
+    }
+
+    button {
+
+      padding: 12px 25px;
+      font-size: 16px;
+      margin: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+
+    }
+
+    #startBtn { background:#007bff; color:white; }
+    #continueBtn { background:#17a2b8; color:white; }
+    #stopBtn { background:#dc3545; color:white; }
+    #formatBtn { background:#28a745; color:white; }
+
+    #response {
+
+      margin-top: 30px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+
+    }
+
+    .box {
+
+      background:white;
+      padding:15px;
+      border-radius:8px;
+      margin-top:15px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+
+    }
+
+    .label {
+      font-weight:bold;
+      margin-bottom:5px;
+    }
+
+    .copyBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ffc107;
+      color: black;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .copyBtn:hover {
+      background: #e0a800;
+    }
+
   </style>
+
 </head>
 <body>
 
-<h1>🎤 Voice Notes Formatter - Batch</h1>
+<h1>🎤 Voice Notes Formatter</h1>
 
-<div id="status">Waiting for phone input..</div>
+<div id="status">Idle</div>
 
-<div id="qr">
-  <p>Scan this QR code from your phone to send a voice note:</p>
-  <canvas id="qrCanvas"></canvas>
-  <p id="sessionText"></p>
-</div>
+<button id="startBtn">Start Listening</button>
+<button id="continueBtn">Continue Listening</button>
+<button id="stopBtn">Stop</button>
+<button id="formatBtn">Format with AI</button>
+
+<br>
+
+<textarea id="textInput" placeholder="Your spoken notes will appear here..."></textarea>
 
 <div id="response"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script>
-  // Generate a random session token per computer
-  const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
-  document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // Generate QR code for phone
-  const phoneUrl = `${window.location.origin}/phone.html?session=${sessionToken}`;
-  QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 }, function (error) {
-    if (error) console.error(error);
+<script>
+
+const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
+
+let recognition;
+let listening = false;
+let silenceTimer;
+
+
+// Initialize speech recognition
+function initSpeech() {
+
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+  recognition.lang = "en-US";
+
+  recognition.continuous = true;
+
+  recognition.interimResults = false;
+
+  recognition.maxAlternatives = 1;
+
+
+  recognition.onstart = () => {
+
+    listening = true;
+
+    document.getElementById("status").innerHTML = "🔴 Listening...";
+    document.getElementById("status").classList.add("listening");
+
+  };
+
+
+  recognition.onresult = (event) => {
+
+    clearTimeout(silenceTimer);
+
+    const lastResult = event.results[event.results.length - 1];
+
+    if (lastResult.isFinal) {
+
+      const transcript = lastResult[0].transcript;
+
+      document.getElementById("textInput").value += transcript + " ";
+
+    }
+
+    silenceTimer = setTimeout(stopListening, 5000);
+
+  };
+
+
+  recognition.onerror = () => stopListening();
+
+
+  recognition.onend = () => {
+
+    listening = false;
+
+    document.getElementById("status").innerHTML = "Idle";
+
+    document.getElementById("status").classList.remove("listening");
+
+  };
+
+}
+
+
+// Start fresh listening
+document.getElementById("startBtn").onclick = () => {
+
+  stopListening();
+
+  document.getElementById("textInput").value = "";
+
+  initSpeech();
+
+  recognition.start();
+
+};
+
+
+// Continue listening (append)
+document.getElementById("continueBtn").onclick = () => {
+
+  if (!listening) {
+
+    initSpeech();
+
+    recognition.start();
+
+  }
+
+};
+
+
+// Stop listening
+document.getElementById("stopBtn").onclick = stopListening;
+
+
+function stopListening() {
+
+  if (recognition && listening) {
+
+    recognition.stop();
+
+  }
+
+}
+
+
+
+// Format with AI
+document.getElementById("formatBtn").onclick = async () => {
+
+  const originalText = document.getElementById("textInput").value.trim();
+
+  if (!originalText) {
+
+    alert("No text to format.");
+
+    return;
+
+  }
+
+  document.getElementById("response").innerHTML = "Formatting with AI...";
+
+
+  try {
+
+    const res = await fetch(webhookUrl, {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body: JSON.stringify({
+        text: originalText
+      })
+
+    });
+
+
+    const data = await res.json();
+
+    let formatted;
+
+
+    if (typeof data === "string") {
+
+      formatted = JSON.parse(data).text;
+
+    }
+
+    else if (data.text) {
+
+      formatted = data.text;
+
+    }
+
+    else {
+
+      formatted = JSON.stringify(data);
+
+    }
+
+
+    document.getElementById("response").innerHTML = `
+
+      <div class="box">
+        <div class="label">Original Note:</div>
+        ${originalText}
+        <button class="copyBtn" onclick="copyToClipboard('${originalText.replace(/'/g,"\\'")}')">📋 Copy</button>
+      </div>
+
+      <div class="box">
+        <div class="label">AI Formatted Note:</div>
+        ${formatted}
+        <button class="copyBtn" onclick="copyToClipboard('${formatted.replace(/'/g,"\\'")}')">📋 Copy</button>
+      </div>
+
+    `;
+
+
+  }
+  catch {
+
+    document.getElementById("response").innerHTML = "❌ Error formatting note.";
+
+  }
+
+};
+
+
+// Copy helper
+function copyToClipboard(text) {
+
+  navigator.clipboard.writeText(text).then(() => {
+
+    alert("Copied to clipboard!");
+
+  }).catch(() => {
+
+    alert("Failed to copy!");
+
   });
 
-  const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
-
-  // Poll n8n every 2 seconds for new note for this session
-  async function pollForNotes() {
-    try {
-      const res = await fetch(`${webhookUrl}?session=${sessionToken}`);
-      if (!res.ok) return;
-
-      const data = await res.json();
-      if (!data || !data.text) return;
-
-      const originalText = data.original || data.text; // fallback if original not sent
-      const formattedText = data.text;
-
-      document.getElementById("response").innerHTML = `
-        <div class="box">
-          <div class="label">Original Note:</div>
-          ${originalText}
-          <button class="copyBtn" onclick="copyToClipboard('${originalText.replace(/'/g,"\\'")}')">📋 Copy</button>
-        </div>
-
-        <div class="box">
-          <div class="label">AI Formatted Note:</div>
-          ${formattedText}
-          <button class="copyBtn" onclick="copyToClipboard('${formattedText.replace(/'/g,"\\'")}')">📋 Copy</button>
-        </div>
-      `;
-    } catch(e) {
-      console.error(e);
-    }
-  }
-
-  // Start polling every 2 seconds
-  setInterval(pollForNotes, 2000);
-
-  // Copy helper
-  function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(()=>{alert("Copied!");}).catch(()=>{alert("Copy failed");});
-  }
+}
 
 </script>
 
