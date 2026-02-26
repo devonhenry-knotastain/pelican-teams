@@ -33,8 +33,10 @@
   const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
   document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // Generate QR code for phone page
-  const phoneUrl = `${window.location.origin}/phone.html?session=${encodeURIComponent(sessionToken)}`;
+  // Relative URL to phone.html
+  const phoneUrl = `phone.html?session=${encodeURIComponent(sessionToken)}`;
+
+  // Generate QR code
   QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 }, function (error) {
     if (error) console.error(error);
   });
@@ -95,7 +97,6 @@
 
   // Poll every 2 seconds
   setInterval(pollForNotes, 2000);
-
 </script>
 
 </body>
