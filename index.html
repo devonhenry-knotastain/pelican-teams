@@ -35,11 +35,13 @@
     }
 
     textarea {
+
       width: 70%;
-      height: 120px;
+      height: 140px;
       font-size: 18px;
       padding: 10px;
       margin-top: 15px;
+
     }
 
     button {
@@ -90,7 +92,7 @@
 
 <h1>🎤 Voice Notes Formatter</h1>
 
-<div id="status"></div>
+<div id="status">Idle</div>
 
 <button id="startBtn">Start Listening</button>
 <button id="continueBtn">Continue Listening</button>
@@ -110,9 +112,10 @@ const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
 
 let recognition;
 let listening = false;
+let silenceTimer;
 
 
-// INIT SPEECH ENGINE
+// Initialize speech recognition
 function initSpeech() {
 
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -121,12 +124,9 @@ function initSpeech() {
 
   recognition.continuous = true;
 
-  recognition.interimResults = true;
+  recognition.interimResults = false;
 
   recognition.maxAlternatives = 1;
-
-
-  let silenceTimer;
 
 
   recognition.onstart = () => {
@@ -143,34 +143,29 @@ function initSpeech() {
 
     clearTimeout(silenceTimer);
 
-    let transcript = "";
+    const lastResult = event.results[event.results.length - 1];
 
-    for (let i = event.resultIndex; i < event.results.length; i++) {
+    if (lastResult.isFinal) {
 
-      transcript += event.results[i][0].transcript;
+      const transcript = lastResult[0].transcript;
+
+      document.getElementById("textInput").value += transcript + " ";
 
     }
 
-    document.getElementById("textInput").value += transcript + " ";
-
-
-    // AUTO STOP after 5 seconds silence
-    silenceTimer = setTimeout(() => {
-
-      stopListening();
-
-    }, 5000);
+    silenceTimer = setTimeout(stopListening, 5000);
 
   };
 
 
   recognition.onerror = () => stopListening();
 
+
   recognition.onend = () => {
 
     listening = false;
 
-    document.getElementById("status").innerHTML = "Stopped";
+    document.getElementById("status").innerHTML = "Idle";
 
     document.getElementById("status").classList.remove("listening");
 
@@ -179,19 +174,21 @@ function initSpeech() {
 }
 
 
-// START NEW
+// Start fresh listening
 document.getElementById("startBtn").onclick = () => {
 
-  initSpeech();
+  stopListening();
 
   document.getElementById("textInput").value = "";
+
+  initSpeech();
 
   recognition.start();
 
 };
 
 
-// CONTINUE
+// Continue listening (append)
 document.getElementById("continueBtn").onclick = () => {
 
   if (!listening) {
@@ -205,34 +202,36 @@ document.getElementById("continueBtn").onclick = () => {
 };
 
 
-// STOP BUTTON
-document.getElementById("stopBtn").onclick = () => {
-
-  stopListening();
-
-};
+// Stop listening
+document.getElementById("stopBtn").onclick = stopListening;
 
 
 function stopListening() {
 
-  if (recognition && listening)
+  if (recognition && listening) {
+
     recognition.stop();
+
+  }
 
 }
 
 
 
-// FORMAT WITH AI
+// Format with AI
 document.getElementById("formatBtn").onclick = async () => {
 
-  const originalText = document.getElementById("textInput").value;
+  const originalText = document.getElementById("textInput").value.trim();
 
   if (!originalText) {
+
     alert("No text to format.");
+
     return;
+
   }
 
-  document.getElementById("response").innerHTML = "Formatting...";
+  document.getElementById("response").innerHTML = "Formatting with AI...";
 
 
   try {
@@ -241,7 +240,9 @@ document.getElementById("formatBtn").onclick = async () => {
 
       method:"POST",
 
-      headers:{ "Content-Type":"application/json" },
+      headers:{
+        "Content-Type":"application/json"
+      },
 
       body: JSON.stringify({
         text: originalText
@@ -252,18 +253,26 @@ document.getElementById("formatBtn").onclick = async () => {
 
     const data = await res.json();
 
-
     let formatted;
 
-    if (typeof data === "string")
+
+    if (typeof data === "string") {
+
       formatted = JSON.parse(data).text;
 
-    else if (data.text)
+    }
+
+    else if (data.text) {
+
       formatted = data.text;
 
-    else
+    }
+
+    else {
+
       formatted = JSON.stringify(data);
 
+    }
 
 
     document.getElementById("response").innerHTML = `
