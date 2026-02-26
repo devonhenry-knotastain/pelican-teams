@@ -33,10 +33,11 @@
   const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
   document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // Relative URL to phone.html
-  const phoneUrl = `phone.html?session=${encodeURIComponent(sessionToken)}`;
+  // GitHub Pages repo folder path
+  const repoBase = "/pelican-teams/";  // Update if your repo folder changes
+  const phoneUrl = `${repoBase}phone.html?session=${encodeURIComponent(sessionToken)}`;
 
-  // Generate QR code
+  // Generate QR code for phone page
   QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 }, function (error) {
     if (error) console.error(error);
   });
