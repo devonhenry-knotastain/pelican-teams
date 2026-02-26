@@ -77,12 +77,29 @@
       border-radius:8px;
       margin-top:15px;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
 
     }
 
     .label {
       font-weight:bold;
       margin-bottom:5px;
+    }
+
+    .copyBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ffc107;
+      color: black;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .copyBtn:hover {
+      background: #e0a800;
     }
 
   </style>
@@ -280,11 +297,13 @@ document.getElementById("formatBtn").onclick = async () => {
       <div class="box">
         <div class="label">Original Note:</div>
         ${originalText}
+        <button class="copyBtn" onclick="copyToClipboard('${originalText.replace(/'/g,"\\'")}')">📋 Copy</button>
       </div>
 
       <div class="box">
         <div class="label">AI Formatted Note:</div>
         ${formatted}
+        <button class="copyBtn" onclick="copyToClipboard('${formatted.replace(/'/g,"\\'")}')">📋 Copy</button>
       </div>
 
     `;
@@ -298,6 +317,22 @@ document.getElementById("formatBtn").onclick = async () => {
   }
 
 };
+
+
+// Copy helper
+function copyToClipboard(text) {
+
+  navigator.clipboard.writeText(text).then(() => {
+
+    alert("Copied to clipboard!");
+
+  }).catch(() => {
+
+    alert("Failed to copy!");
+
+  });
+
+}
 
 </script>
 
