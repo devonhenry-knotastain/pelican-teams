@@ -6,28 +6,91 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 100px;
-      background: #f4f4f4;
+      margin-top: 50px;
+      background: #f4f6f9;
     }
 
-    button {
-      padding: 12px 20px;
-      font-size: 16px;
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    #status {
+      font-size: 22px;
+      margin-bottom: 20px;
+      height: 30px;
+      font-weight: bold;
+    }
+
+    .listening {
+      color: red;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    #micButton {
       background: #007bff;
-      color: white;
       border: none;
-      border-radius: 5px;
+      padding: 25px;
+      border-radius: 50%;
       cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      transition: 0.2s;
     }
 
-    button:hover {
+    #micButton:hover {
+      transform: scale(1.1);
       background: #0056b3;
     }
 
-    #output {
+    #micIcon {
+      width: 100px;
+      height: 100px;
+    }
+
+    textarea {
+      width: 70%;
+      height: 120px;
       margin-top: 20px;
-      font-size: 18px;
-      color: #333;
+      font-size: 20px;
+      padding: 10px;
+    }
+
+    #sendButton {
+      margin-top: 20px;
+      padding: 15px 40px;
+      font-size: 20px;
+      background: green;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #sendButton:hover {
+      background: darkgreen;
+    }
+
+    #response {
+      margin-top: 30px;
+      font-size: 22px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #qr {
+      margin-top: 60px;
+    }
+
+    #qr img {
+      width: 250px;
+      height: 250px;
     }
   </style>
 </head>
@@ -35,48 +98,75 @@
 
 <h1>🎤 Speak to n8n</h1>
 
-<button onclick="startListening()">Start Speaking</button>
+<div id="status"></div>
 
-<div id="output"></div>
+<button id="micButton" onclick="startListening()">
+  <img id="micIcon" src="https://cdn-icons-png.flaticon.com/512/61/61012.png">
+</button>
+
+<br>
+
+<textarea id="textInput" placeholder="Your speech will appear here..."></textarea>
+
+<br>
+
+<button id="sendButton" onclick="sendToN8n()">Send</button>
+
+<div id="response"></div>
+
+<div id="qr">
+  <p style="font-size:20px;">Scan to Open This App</p>
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAAFACAYAAADNkKWqAAAQAElEQVR4Aezd23LbyA5GYa28/ztnm/F2RrEt9U8ZJPuwpsKxLEJo4IML5Qtm5tftdvvt9W7wO/znCq+wtDgs6SFOdkFgUv9VMSlHUl+aK41LzlwpZluAb/36RwEFFFhPwAW43sztWAEF/i+w9AL8v4FfFFBgUQEX4KKDt20FFLjdXID+FCigwLICLsBVR2/fCijgb4D+DCigwLoC/ga47uztXIHlBaIF+Pv379voV6+TTl3T+oEbtK80X69xqdv3cf/+PPfa41V1JWa9x6R20QJMkxmngAIKjCTgAhxpWtaqgAKlAi7AUk6TKdC9gAXeCbgA7zB8qYACawm4ANeat90qoMCdgAvwDsOXCigwt8Dn7lyAn0X8XgEFlhFwAS4zahtVQIHPAi7AzyJ+r4ACywiULkBo/w0EqI3ZM6mq2Mqn4Ktq2psn6SHNCdlM03xJHJx/ZmK2xST1pzFwfp/VtUHWA7Tj0trSuNIFmB5qnAIKKNCDgAuwhylYgwIKXCLgAryE/YJDPVIBBb4IuAC/kPiGAgqsIuACXGXS9qmAAl8EXIBfSHxjPgE7UuB7ARfg9y6+q4ACCwi4ABcYsi0qoMD3Ai7A7118V4FZBOzjiYAL8AnOo1vQfmIdronZ/iZCcj3q7f59yHpIzttiIMsH7bj7Op+9hrpcz865vwftM4H7j/j6IgEX4EXwHquAAtcLuACvn4EVKKDAQQKttC7AlpD3FVBgWgEX4LSjtTEFFGgJuABbQt5XQIFpBaZegNNOzcYUUKBEwAVYwmgSBRQYUcAFOOLUrFkBBUoEXIAvMG4P9SbXC6nrPtLIBNzg+dVIsft2YlYdkxSZngnPveD9fpoviUvqN+Z1ARfg63Z+UgEFBhdwAQ4+QMtXQIHXBVyAr9v5yW4FLEyBTMAFmDkZpYACEwq4ACccqi0poEAm4ALMnIxSYBQB69wh4ALcgWWoAgrMJeACnGuedqOAAjsEXIA7sAxVQIG+BfZWV7oAkyfbq2P2NtxbfLUHvP9tBHj+NTn3Cit4Xjfsu5/0AFnOxGyLgSxfUlvPMVuvZ1/VHqULsLo48ymggAJHCrgAj9Q1twIKdC0w1QLsWtriFFCgOwEXYHcjsSAFFDhLwAV4lrTnKKBAdwIuwO5G8mJBfkwBBXYLuAB3k/kBBRSYRcAFOMsk7UMBBXYLuAB3k/mB/gTs=">
+</div>
 
 <script>
-  const webhookUrl = "https://n8n.knotastain.com/webhook-test/f6a078c6-67ec-4b15-8a6e-88e85b3fa666"; // CHANGE if needed
+  const webhookUrl = "https://n8n.knotastain.com/webhook-test/f6a078c6-67ec-4b15-8a6e-88e85b3fa666";
 
   function startListening() {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
+
+    const status = document.getElementById("status");
+    status.innerHTML = "🔴 Listening...";
+    status.classList.add("listening");
+
     recognition.start();
 
-    recognition.onresult = async function(event) {
+    recognition.onresult = function(event) {
       const transcript = event.results[0][0].transcript;
-      document.getElementById("output").innerHTML = 
-        "<strong>You said:</strong> " + transcript;
+      document.getElementById("textInput").value = transcript;
 
-      // Send to n8n
-      try {
-        const response = await fetch(webhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ text: transcript })
-        });
-
-        const data = await response.json();
-
-        document.getElementById("output").innerHTML += 
-          "<br><br><strong>n8n Response:</strong> " + 
-          JSON.stringify(data);
-
-      } catch (error) {
-        document.getElementById("output").innerHTML += 
-          "<br><br>❌ Error sending to n8n";
-      }
+      status.innerHTML = "✅ Speech captured";
+      status.classList.remove("listening");
     };
 
-    recognition.onerror = function(event) {
-      alert("Speech recognition error: " + event.error);
+    recognition.onerror = function() {
+      status.innerHTML = "❌ Error during listening";
+      status.classList.remove("listening");
     };
+  }
+
+  async function sendToN8n() {
+    const text = document.getElementById("textInput").value;
+
+    document.getElementById("response").innerHTML = "Sending...";
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      const data = await response.json();
+
+      document.getElementById("response").innerHTML =
+        "<strong>n8n Response:</strong><br>" +
+        JSON.stringify(data);
+
+    } catch (error) {
+      document.getElementById("response").innerHTML = "❌ Error sending to n8n";
+    }
   }
 </script>
 
