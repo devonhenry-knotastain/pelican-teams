@@ -61,19 +61,24 @@
       padding: 10px;
     }
 
-    #sendButton {
-      margin-top: 20px;
-      padding: 15px 40px;
-      font-size: 20px;
-      background: green;
-      color: white;
+    button {
+      margin-top: 15px;
+      padding: 12px 30px;
+      font-size: 18px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      margin-right: 10px;
     }
 
-    #sendButton:hover {
-      background: darkgreen;
+    #formatButton {
+      background: #007bff;
+      color: white;
+    }
+
+    #sendButton {
+      background: green;
+      color: white;
     }
 
     #response {
@@ -82,21 +87,16 @@
       max-width: 700px;
       margin-left: auto;
       margin-right: auto;
-    }
-
-    #qr {
-      margin-top: 60px;
-    }
-
-    #qr img {
-      width: 250px;
-      height: 250px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
 
-<h1>🎤 Speak to n8n</h1>
+<h1>🎤 Resort Messaging Assistant</h1>
 
 <div id="status"></div>
 
@@ -106,31 +106,70 @@
 
 <br>
 
-<textarea id="textInput" placeholder="Your speech will appear here..."></textarea>
+<textarea id="textInput" placeholder="Speak or type your message..."></textarea>
 
 <br>
 
-<button id="sendButton" onclick="sendToN8n()">Send</button>
+<button id="formatButton" onclick="formatWithAI()">✨ Format with AI</button>
+<button id="sendButton" onclick="sendFinal()">📤 Send Final</button>
 
 <div id="response"></div>
 
-<div id="qr">
-  <p style="font-size:20px;">Scan to Open This App</p>
-  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAAFACAYAAADNkKWqAAAQAElEQVR4Aezd23LbyA5GYa28/ztnm/F2RrEt9U8ZJPuwpsKxLEJo4IML5Qtm5tftdvvt9W7wO/znCq+wtDgs6SFOdkFgUv9VMSlHUl+aK41LzlwpZluAb/36RwEFFFhPwAW43sztWAEF/i+w9AL8v4FfFFBgUQEX4KKDt20FFLjdXID+FCigwLICLsBVR2/fCijgb4D+DCigwLoC/ga47uztXIHlBaIF+Pv379voV6+TTl3T+oEbtK80X69xqdv3cf/+PPfa41V1JWa9x6R20QJMkxmngAIKjCTgAhxpWtaqgAKlAi7AUk6TKdC9gAXeCbgA7zB8qYACawm4ANeat90qoMCdgAvwDsOXCigwt8Dn7lyAn0X8XgEFlhFwAS4zahtVQIHPAi7AzyJ+r4ACywiULkBo/w0EqI3ZM6mq2Mqn4Ktq2psn6SHNCdlM03xJHJx/ZmK2xST1pzFwfp/VtUHWA7Tj0trSuNIFmB5qnAIKKNCDgAuwhylYgwIKXCLgAryE/YJDPVIBBb4IuAC/kPiGAgqsIuACXGXS9qmAAl8EXIBfSHxjPgE7UuB7ARfg9y6+q4ACCwi4ABcYsi0qoMD3Ai7A7118V4FZBOzjiYAL8AnOo1vQfmIdronZ/iZCcj3q7f59yHpIzttiIMsH7bj7Op+9hrpcz865vwftM4H7j/j6IgEX4EXwHquAAtcLuACvn4EVKKDAQQKttC7AlpD3FVBgWgEX4LSjtTEFFGgJuABbQt5XQIFpBaZegNNOzcYUUKBEwAVYwmgSBRQYUcAFOOLUrFkBBUoEXIAvMG4P9SbXC6nrPtLIBNzg+dVIsft2YlYdkxSZngnPveD9fpoviUvqN+Z1ARfg63Z+UgEFBhdwAQ4+QMtXQIHXBVyAr9v5yW4FLEyBTMAFmDkZpYACEwq4ACccqi0poEAm4ALMnIxSYBQB69wh4ALcgWWoAgrMJeACnGuedqOAAjsEXIA7sAxVQIG+BfZWV7oAkyfbq2P2NtxbfLUHvP9tBHj+NTn3Cit4Xjfsu5/0AFnOxGyLgSxfUlvPMVuvZ1/VHqULsLo48ymggAJHCrgAj9Q1twIKdC0w1QLsWtriFFCgOwEXYHcjsSAFFDhLwAV4lrTnKKBAdwIuwO5G8mJBfkwBBXYLuAB3k/kBBRSYRcAFOMsk7UMBBXYLuAB3k/mB/gTs=">
-</div>
-
 <script>
-const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
 
-async function sendToN8n() {
+const formatWebhook = "https://n8n.knotastain.com/webhook-test/format-message";
+const sendWebhook = "https://n8n.knotastain.com/webhook-test/send-message";
+
+let formattedMessage = "";
+
+
+// SPEECH RECOGNITION
+function startListening() {
+
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  const status = document.getElementById("status");
+
+  status.innerHTML = "🔴 Listening...";
+  status.classList.add("listening");
+
+  recognition.start();
+
+  recognition.onresult = function(event) {
+
+    const transcript = event.results[0][0].transcript;
+
+    document.getElementById("textInput").value = transcript;
+
+    status.innerHTML = "✅ Speech captured";
+    status.classList.remove("listening");
+  };
+
+  recognition.onerror = function() {
+    status.innerHTML = "❌ Speech error";
+    status.classList.remove("listening");
+  };
+}
+
+
+// FORMAT WITH AI
+async function formatWithAI() {
 
   const text = document.getElementById("textInput").value;
+
+  if (!text) {
+    alert("Enter or speak a message first.");
+    return;
+  }
 
   document.getElementById("response").innerHTML = "Formatting with AI...";
 
   try {
 
-    const response = await fetch(webhookUrl, {
+    const res = await fetch(formatWebhook, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -140,33 +179,75 @@ async function sendToN8n() {
       })
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    // if AI returned JSON properly
-    let formattedText;
-
+    // handle possible formats
     if (typeof data === "string") {
-      formattedText = JSON.parse(data).text;
+
+      formattedMessage = JSON.parse(data).text;
+
     } else if (data.text) {
-      formattedText = data.text;
+
+      formattedMessage = data.text;
+
     } else {
-      formattedText = JSON.stringify(data);
+
+      formattedMessage = JSON.stringify(data);
+
     }
 
     document.getElementById("response").innerHTML =
       "<strong>AI formatted message:</strong><br><br>" +
-      formattedText;
+      formattedMessage;
 
-    // optionally update textarea with AI version
-    document.getElementById("textInput").value = formattedText;
+    document.getElementById("textInput").value = formattedMessage;
 
-  } catch (error) {
+  }
+  catch (err) {
 
     document.getElementById("response").innerHTML =
-      "❌ Error formatting message";
+      "❌ AI formatting failed";
 
   }
 }
+
+
+// SEND FINAL MESSAGE
+async function sendFinal() {
+
+  const text = document.getElementById("textInput").value;
+
+  if (!text) {
+    alert("Nothing to send.");
+    return;
+  }
+
+  document.getElementById("response").innerHTML = "Sending...";
+
+  try {
+
+    await fetch(sendWebhook, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: text
+      })
+    });
+
+    document.getElementById("response").innerHTML =
+      "✅ Message sent successfully.";
+
+  }
+  catch {
+
+    document.getElementById("response").innerHTML =
+      "❌ Failed to send message.";
+
+  }
+}
+
 </script>
 
 </body>
