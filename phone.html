@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Note Sender</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 40px; background: #f4f6f9; }
+    h1 { font-size: 36px; margin-bottom: 20px; }
+    button { padding: 15px 30px; font-size: 18px; margin: 10px; border-radius: 6px; cursor: pointer; border: none; }
+    #startBtn { background: #007bff; color: white; }
+    #sendBtn { background: green; color: white; }
+    #textInput { width: 80%; height: 140px; font-size: 18px; padding: 10px; margin-top: 15px; }
+    #status { font-size: 18px; margin-top: 15px; font-weight: bold; height: 25px; }
+  </style>
+</head>
+<body>
+
+<h1>Send Voice Note</h1>
+
+<textarea id="textInput" placeholder="Your speech will appear here..."></textarea>
+<br>
+<button id="startBtn">🎤 Start Speaking</button>
+<button id="sendBtn">📤 Send Note</button>
+
+<div id="status"></div>
+
+<script>
+  // Get session token from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionToken = urlParams.get('session');
+
+  if(!sessionToken) {
+    document.getElementById('status').innerText = "❌ Session token missing in URL!";
+  }
+
+  const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
+
+  let recognition;
+  let listening = false;
+
+  document.getElementById('startBtn').onclick = () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert("Your browser does not support speech recognition.");
+      return;
+    }
+
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // stop automatically
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      listening = true;
+      document.getElementById('status').innerText = "🔴 Listening...";
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      // Append to textarea so you can continue previous messages
+      const current = document.getElementById('textInput').value;
+      document.getElementById('textInput').value = current ? current + " " + transcript : transcript;
+    };
+
+    recognition.onend = () => {
+      listening = false;
+      document.getElementById('status').innerText = "✅ Speech captured. You can edit the text or press Send.";
+    };
+
+    recognition.onerror = (event) => {
+      listening = false;
+      document.getElementById('status').innerText = "❌ Error: " + event.error;
+    };
+
+    recognition.start();
+  };
+
+  document.getElementById('sendBtn').onclick = async () => {
+    const text = document.getElementById('textInput').value.trim();
+    if (!text) {
+      alert("Nothing to send!");
+      return;
+    }
+
+    document.getElementById('status').innerText = "📤 Sending note...";
+
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, session: sessionToken })
+      });
+
+      if (!res.ok) throw new Error("Network response was not OK");
+
+      document.getElementById('status').innerText = "✅ Note sent successfully!";
+      // Optionally clear textarea or keep it
+      // document.getElementById('textInput').value = "";
+
+    } catch(e) {
+      console.error(e);
+      document.getElementById('status').innerText = "❌ Failed to send note.";
+    }
+  };
+</script>
+
+</body>
+</html>
