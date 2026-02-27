@@ -47,27 +47,28 @@
 
   let lastText = ""; // track last received note
 
-  async function pollForNotes() {
-    try {
-      const res = await fetch(`${repoBase}data.json?t=${Date.now()}`);
-      if (!res.ok) return;
-      const data = await res.json();
-
-      // Example JSON structure: { "original": "Raw note", "text": "Formatted note" }
-      if (!data || !data.text) return;
-
-      const originalText = data.original || data.text;
-      const formattedText = data.text;
-
-      // Avoid duplicates
-      if (formattedText === lastText) return;
-      lastText = formattedText;
-
-      displayNotes(originalText, formattedText); // function to show in page
-    } catch (e) {
-      console.error("Polling error:", e);
+async function pollForNotes() {
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/devonhenry-knotastain/pelican-teams/main/data.json?t=" + Date.now());
+    if (!res.ok) {
+      console.error("Failed to fetch data.json", res.status);
+      return;
     }
+
+    const data = await res.json();
+    if (!data || !data.text) return;
+
+    const originalText = data.original || data.text;
+    const formattedText = data.text;
+
+    if (formattedText === lastText) return;
+    lastText = formattedText;
+
+    displayNotes(originalText, formattedText);
+  } catch (e) {
+    console.error("Polling error:", e);
   }
+}
 
   // Function to display the notes on page
   function displayNotes(original, formatted) {
