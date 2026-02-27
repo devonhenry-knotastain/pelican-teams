@@ -3,40 +3,98 @@
 <head>
   <title>Phone Voice Input</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 40px; background: #f4f6f9; }
-    h1 { font-size: 36px; }
-    #status { font-size: 20px; margin-bottom: 10px; font-weight: bold; }
-    #textArea { width: 90%; height: 150px; margin-top: 15px; font-size: 18px; padding: 10px; }
-    button { padding: 12px 25px; font-size: 18px; margin: 10px; cursor: pointer; border-radius: 6px; border: none; }
+    body { 
+      font-family: Arial; 
+      text-align: center; 
+      margin-top: 40px; 
+      background: #f4f6f9; 
+      padding: 20px;
+    }
+
+    h1 { font-size: 32px; margin-bottom: 5px; }
+
+    #sessionDisplay {
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: #555;
+      font-weight: bold;
+    }
+
+    #status { 
+      font-size: 18px; 
+      margin-bottom: 10px; 
+      font-weight: bold; 
+      min-height: 24px;
+    }
+
+    #textArea { 
+      width: 95%; 
+      height: 180px; 
+      margin-top: 15px; 
+      font-size: 18px; 
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+
+    button { 
+      padding: 12px 20px; 
+      font-size: 16px; 
+      margin: 8px; 
+      cursor: pointer; 
+      border-radius: 6px; 
+      border: none; 
+    }
+
     #micButton { background: #007bff; color:white; }
     #micButton.listening { background: red; animation: pulse 1s infinite; }
+
     #sendButton { background: green; color:white; }
+
     #restartButton { background: #ffc107; color:black; }
-    #silenceOptions { margin-top: 15px; }
-    @keyframes pulse { 0% { opacity:1 } 50% { opacity:0.4 } 100% { opacity:1 } }
+
+    #silenceOptions { 
+      margin-top: 20px; 
+      display:none;
+      background:white;
+      padding:15px;
+      border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    @keyframes pulse { 
+      0% { opacity:1 } 
+      50% { opacity:0.4 } 
+      100% { opacity:1 } 
+    }
   </style>
 </head>
 <body>
 
 <h1>🎤 Phone Voice Input</h1>
+<div id="sessionDisplay"></div>
 <div id="status">Waiting for voice input...</div>
 
-<textarea id="textArea" placeholder="Your speech will appear here..." ></textarea><br>
+<textarea id="textArea" placeholder="Your speech will appear here..."></textarea><br>
 
-<button id="micButton">🎙 Start/Stop Listening</button>
+<button id="micButton">🎙 Start / Stop Listening</button>
 <button id="sendButton">Send</button>
 <button id="restartButton">Restart Text</button>
 
-<div id="silenceOptions" style="display:none;">
-  <p>Stopped due to silence. Choose:</p>
-  <button id="continueButton">Continue same message</button>
-  <button id="startOverButton">Start over</button>
+<div id="silenceOptions">
+  <p><strong>Stopped due to 5 seconds of silence.</strong></p>
+  <button id="continueButton">Continue Same Message</button>
+  <button id="startOverButton">Start Over</button>
 </div>
 
 <script>
-  const webhookUrl = "https://n8n.knotastain.com/webhook/format-message"; // your n8n webhook
+  const webhookUrl = "https://n8n.knotastain.com/webhook/format-message";
+
   const params = new URLSearchParams(window.location.search);
-  const sessionToken = params.get("session") || "DEFAULTSESSION";
+  const sessionToken = params.get("session") || "NO_SESSION";
+
+  document.getElementById("sessionDisplay").innerText = "Session: " + sessionToken;
 
   let recognition;
   let listening = false;
@@ -58,7 +116,7 @@
       stopListening();
       silenceOptions.style.display = "block";
       statusDiv.innerText = "⏸ Stopped due to 5s of silence";
-    }, 5000); // 5 seconds of silence
+    }, 5000);
   }
 
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -104,7 +162,6 @@
     listening = false;
     if (recognition) recognition.stop();
     micButton.classList.remove("listening");
-    if (currentText === "") statusDiv.innerText = "✅ Paused";
   }
 
   micButton.addEventListener("click", () => {
@@ -115,8 +172,8 @@
   restartButton.addEventListener("click", () => {
     textArea.value = "";
     currentText = "";
-    statusDiv.innerText = "✏️ Text restarted";
     silenceOptions.style.display = "none";
+    statusDiv.innerText = "✏️ Text restarted";
   });
 
   continueButton.addEventListener("click", () => {
@@ -130,41 +187,35 @@
     startListening();
   });
 
-sendButton.addEventListener("click", async () => {
-  const textToSend = textArea.value.trim();
-  if (!textToSend) {
-    alert("No text to send!");
-    return;
-  }
+  sendButton.addEventListener("click", async () => {
+    const textToSend = textArea.value.trim();
+    if (!textToSend) {
+      alert("No text to send!");
+      return;
+    }
 
-  // 🔴 ALWAYS stop listening when sending
-  if (listening) {
-    stopListening();
-  }
+    // 🔴 ALWAYS stop listening when sending
+    if (listening) stopListening();
+    if (silenceTimer) clearTimeout(silenceTimer);
 
-  // Clear silence timer
-  if (silenceTimer) clearTimeout(silenceTimer);
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: textToSend,
+          session: sessionToken
+        })
+      });
 
-  try {
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: textToSend,
-        session: sessionToken
-      })
-    });
+      statusDiv.innerText = "✅ Sent successfully!";
+      silenceOptions.style.display = "none";
 
-    statusDiv.innerText = "✅ Sent to n8n!";
-    
-    // Do NOT restart listening
-    // Just keep the text as-is unless you want to clear it
-
-  } catch (err) {
-    console.error(err);
-    statusDiv.innerText = "❌ Error sending to n8n";
-  }
-});
+    } catch (err) {
+      console.error(err);
+      statusDiv.innerText = "❌ Error sending";
+    }
+  });
 </script>
 
 </body>
