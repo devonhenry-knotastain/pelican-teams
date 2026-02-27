@@ -1,105 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Voice Note Sender</title>
+  <title>Phone Voice Input</title>
   <style>
     body { font-family: Arial; text-align: center; margin-top: 40px; background: #f4f6f9; }
-    h1 { font-size: 36px; margin-bottom: 20px; }
-    button { padding: 15px 30px; font-size: 18px; margin: 10px; border-radius: 6px; cursor: pointer; border: none; }
-    #startBtn { background: #007bff; color: white; }
-    #sendBtn { background: green; color: white; }
-    #textInput { width: 80%; height: 140px; font-size: 18px; padding: 10px; margin-top: 15px; }
-    #status { font-size: 18px; margin-top: 15px; font-weight: bold; height: 25px; }
+    h1 { font-size: 36px; }
+    #status { font-size: 20px; margin-bottom: 10px; font-weight: bold; }
+    #textArea { width: 90%; height: 150px; margin-top: 15px; font-size: 18px; padding: 10px; }
+    #micButton, #sendButton { padding: 15px 25px; font-size: 18px; margin: 10px; cursor: pointer; border-radius: 6px; border: none; }
+    #micButton { background: #007bff; color:white; }
+    #micButton.listening { background: red; animation: pulse 1s infinite; }
+    #sendButton { background: green; color:white; }
+    @keyframes pulse { 0% { opacity:1 } 50% { opacity:0.4 } 100% { opacity:1 } }
   </style>
 </head>
 <body>
 
-<h1>Send Voice Note</h1>
+<h1>🎤 Phone Voice Input</h1>
+<div id="status">Waiting for voice input...</div>
 
-<textarea id="textInput" placeholder="Your speech will appear here..."></textarea>
-<br>
-<button id="startBtn">🎤 Start Speaking</button>
-<button id="sendBtn">📤 Send Note</button>
+<textarea id="textArea" placeholder="Your speech will appear here..." readonly></textarea><br>
 
-<div id="status"></div>
+<button id="micButton">🎙 Start/Stop Listening</button>
+<button id="sendButton">Send to n8n</button>
 
 <script>
-  // Get session token from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const sessionToken = urlParams.get('session');
-
-  if(!sessionToken) {
-    document.getElementById('status').innerText = "❌ Session token missing in URL!";
-  }
-
-  const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
+  const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message"; // your n8n webhook
+  const params = new URLSearchParams(window.location.search);
+  const sessionToken = params.get("session") || "DEFAULTSESSION";
 
   let recognition;
   let listening = false;
 
-  document.getElementById('startBtn').onclick = () => {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert("Your browser does not support speech recognition.");
-      return;
-    }
+  // Store all appended text
+  let currentText = "";
 
-    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'en-US';
-    recognition.continuous = false; // stop automatically
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      listening = true;
-      document.getElementById('status').innerText = "🔴 Listening...";
-    };
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      // Append to textarea so you can continue previous messages
-      const current = document.getElementById('textInput').value;
-      document.getElementById('textInput').value = current ? current + " " + transcript : transcript;
-    };
-
-    recognition.onend = () => {
-      listening = false;
-      document.getElementById('status').innerText = "✅ Speech captured. You can edit the text or press Send.";
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      document.getElementById("textArea").value = currentText + transcript;
     };
 
     recognition.onerror = (event) => {
+      document.getElementById("status").innerText = "❌ Error: " + event.error;
       listening = false;
-      document.getElementById('status').innerText = "❌ Error: " + event.error;
+      document.getElementById("micButton").classList.remove("listening");
     };
 
-    recognition.start();
-  };
+    recognition.onend = () => {
+      if (listening) recognition.start(); // keep continuous listening
+    };
+  } else {
+    alert("Your browser does not support Speech Recognition");
+  }
 
-  document.getElementById('sendBtn').onclick = async () => {
-    const text = document.getElementById('textInput').value.trim();
-    if (!text) {
-      alert("Nothing to send!");
+  document.getElementById("micButton").addEventListener("click", () => {
+    if (!recognition) return;
+    listening = !listening;
+    if (listening) {
+      recognition.start();
+      document.getElementById("status").innerText = "🔴 Listening...";
+      document.getElementById("micButton").classList.add("listening");
+    } else {
+      recognition.stop();
+      document.getElementById("status").innerText = "✅ Paused";
+      document.getElementById("micButton").classList.remove("listening");
+      // Save the latest transcript to currentText
+      currentText = document.getElementById("textArea").value + "\n";
+    }
+  });
+
+  document.getElementById("sendButton").addEventListener("click", async () => {
+    const textToSend = document.getElementById("textArea").value.trim();
+    if (!textToSend) {
+      alert("No text to send!");
       return;
     }
-
-    document.getElementById('status').innerText = "📤 Sending note...";
 
     try {
       const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, session: sessionToken })
+        body: JSON.stringify({
+          text: textToSend,
+          session: sessionToken
+        })
       });
-
-      if (!res.ok) throw new Error("Network response was not OK");
-
-      document.getElementById('status').innerText = "✅ Note sent successfully!";
-      // Optionally clear textarea or keep it
-      // document.getElementById('textInput').value = "";
-
-    } catch(e) {
-      console.error(e);
-      document.getElementById('status').innerText = "❌ Failed to send note.";
+      if (!res.ok) throw new Error("Failed to send to n8n");
+      document.getElementById("status").innerText = "✅ Sent to n8n!";
+      // Optionally clear textarea or keep text
+      currentText = ""; 
+      document.getElementById("textArea").value = "";
+    } catch (err) {
+      console.error(err);
+      document.getElementById("status").innerText = "❌ Error sending to n8n";
     }
-  };
+  });
 </script>
 
 </body>
