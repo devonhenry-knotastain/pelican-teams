@@ -27,13 +27,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  // Generate a unique session token
-  const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
-  document.getElementById("sessionText").innerText = "Session: " + sessionToken;
+// Generate a unique session token
+const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
+document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // QR code points to phone.html?session=SESSION_TOKEN
-  const phoneUrl = `phone.html?session=${encodeURIComponent(sessionToken)}`;
-  QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
+// Get the base URL of the current page
+const baseUrl = window.location.origin; // e.g., https://speech-totext-pelican.netlify.app
+
+// QR code points to phone.html on the same base URL, with session
+const phoneUrl = `${baseUrl}/phone.html?session=${encodeURIComponent(sessionToken)}`;
+
+QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
 
   const responseDiv = document.getElementById("response");
   const displayedNotes = new Set();
