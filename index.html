@@ -3,13 +3,78 @@
 <head>
   <title>Voice Notes Formatter - Batch Mode</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 40px; background: #f4f6f9; }
-    h1 { font-size: 42px; }
-    #status { font-size: 20px; height: 30px; margin-bottom: 10px; font-weight: bold; }
-    .box { background:white; padding:15px; border-radius:8px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); position: relative; text-align:left; white-space: pre-wrap; word-wrap: break-word; }
-    .label { font-weight:bold; margin-bottom:5px; }
-    #qr { margin-top: 30px; }
-    canvas { margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+      background: #f4f6f9;
+    }
+    h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+    #status {
+      font-size: 20px;
+      height: 30px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    #qr {
+      margin-top: 30px;
+    }
+    canvas {
+      margin-top: 10px;
+    }
+    #response {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    .box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 600px;
+      text-align: left;
+      position: relative;
+    }
+    .section {
+      margin-bottom: 12px;
+      position: relative;
+      padding-right: 50px;
+    }
+    .label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    .copyBtn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #ffc107;
+      color: black;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+    .copyBtn:hover {
+      background: #e0a800;
+    }
+    .textContent {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #f9f9f9;
+      padding: 8px;
+      border-radius: 6px;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
@@ -27,20 +92,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-// Generate a unique session token
-const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
-document.getElementById("sessionText").innerText = "Session: " + sessionToken;
+  const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
+  document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-// Get the base URL of the current page
-const baseUrl = window.location.origin; // e.g., https://speech-totext-pelican.netlify.app
-
-// QR code points to phone.html on the same base URL, with session
-const phoneUrl = `${baseUrl}/phone.html?session=${encodeURIComponent(sessionToken)}`;
-
-QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
+  const baseUrl = window.location.origin;
+  const phoneUrl = `${baseUrl}/phone.html?session=${encodeURIComponent(sessionToken)}`;
+  QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
 
   const responseDiv = document.getElementById("response");
   const displayedNotes = new Set();
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied to clipboard!");
+    });
+  }
 
   async function pollForNotes() {
     try {
@@ -55,23 +121,42 @@ QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
         box.className = "box";
         box.id = note.updated;
 
+        // Original section
+        const origSection = document.createElement("div");
+        origSection.className = "section";
         const origLabel = document.createElement("div");
         origLabel.className = "label";
         origLabel.textContent = "Original:";
-        box.appendChild(origLabel);
-
         const origText = document.createElement("div");
+        origText.className = "textContent";
         origText.textContent = note.original;
-        box.appendChild(origText);
+        const origCopy = document.createElement("button");
+        origCopy.className = "copyBtn";
+        origCopy.textContent = "Copy";
+        origCopy.onclick = () => copyToClipboard(note.original);
+        origSection.appendChild(origLabel);
+        origSection.appendChild(origText);
+        origSection.appendChild(origCopy);
 
+        // Formatted section
+        const formattedSection = document.createElement("div");
+        formattedSection.className = "section";
         const formattedLabel = document.createElement("div");
         formattedLabel.className = "label";
         formattedLabel.textContent = "Formatted:";
-        box.appendChild(formattedLabel);
-
         const formattedText = document.createElement("div");
+        formattedText.className = "textContent";
         formattedText.textContent = note.text;
-        box.appendChild(formattedText);
+        const formattedCopy = document.createElement("button");
+        formattedCopy.className = "copyBtn";
+        formattedCopy.textContent = "Copy";
+        formattedCopy.onclick = () => copyToClipboard(note.text);
+        formattedSection.appendChild(formattedLabel);
+        formattedSection.appendChild(formattedText);
+        formattedSection.appendChild(formattedCopy);
+
+        box.appendChild(origSection);
+        box.appendChild(formattedSection);
 
         responseDiv.prepend(box);
         displayedNotes.add(note.updated);
@@ -81,7 +166,6 @@ QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
     }
   }
 
-  // Poll every 2 seconds
   setInterval(pollForNotes, 2000);
   pollForNotes();
 </script>
