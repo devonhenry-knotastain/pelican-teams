@@ -42,7 +42,8 @@
     if (error) console.error(error);
   });
 
-  const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
+ // Desktop polling webhook URL
+  const webhookPollUrl = "https://n8n.knotastain.com/webhook-test/poll-notes"; // change to your actual n8n GET webhook
   let lastText = ""; // track last received note
 
 // Polling code in index.html
@@ -65,6 +66,8 @@ async function pollForNotes() {
     console.error("Polling error:", e);
   }
 }
+
+setInterval(pollForNotes, 2000);
 setInterval(pollForNotes, 2000);
 
   // Poll every 2 seconds
