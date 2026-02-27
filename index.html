@@ -29,76 +29,73 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  // Generate a random session token
+  // 1️⃣ Generate a unique session token
   const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
   document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // Generate QR code for phone page
+  // 2️⃣ Generate QR code pointing to phone page with session query param
   const repoBase = "https://devonhenry-knotastain.github.io/pelican-teams/";
   const phoneUrl = `${repoBase}phone.html?session=${encodeURIComponent(sessionToken)}`;
+
   QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 }, function (error) {
     if (error) console.error(error);
   });
 
-  // Raw GitHub URL for data.json (auto-refresh using timestamp to bypass cache)
+  // 3️⃣ GitHub raw URL for data.json
   const dataJsonUrl = "https://raw.githubusercontent.com/devonhenry-knotastain/pelican-teams/main/data.json";
 
-  let lastText = ""; // track last received note
+  // Track notes already displayed by their unique 'updated' timestamp
+  const displayedNotes = new Set();
 
+  // 4️⃣ Poll GitHub every 2 seconds
   async function pollForNotes() {
     try {
       const res = await fetch(`${dataJsonUrl}?t=${Date.now()}`);
-      if (!res.ok) {
-        console.error("Failed to fetch data.json", res.status);
-        return;
-      }
-
+      if (!res.ok) return;
       const data = await res.json();
-      if (!data || !data.text) return;
+      if (!data || !data[sessionToken]) return; // No notes for this session
 
-      const originalText = data.original || data.text;
-      const formattedText = data.text;
+      const notes = data[sessionToken];
 
-      // Avoid duplicates
-      if (formattedText === lastText) return;
-      lastText = formattedText;
+      notes.forEach(note => {
+        if (displayedNotes.has(note.updated)) return; // skip already displayed
 
-      displayNotes(originalText, formattedText);
+        // Add to page
+        const responseDiv = document.getElementById("response");
+        const box = document.createElement("div");
+        box.className = "box";
+        box.id = note.updated;
+
+        const origLabel = document.createElement("div");
+        origLabel.className = "label";
+        origLabel.textContent = "Original:";
+        box.appendChild(origLabel);
+
+        const origText = document.createElement("div");
+        origText.textContent = note.original;
+        box.appendChild(origText);
+
+        const formattedLabel = document.createElement("div");
+        formattedLabel.className = "label";
+        formattedLabel.textContent = "Formatted:";
+        box.appendChild(formattedLabel);
+
+        const formattedText = document.createElement("div");
+        formattedText.textContent = note.text;
+        box.appendChild(formattedText);
+
+        responseDiv.prepend(box); // newest notes on top
+        displayedNotes.add(note.updated);
+      });
+
     } catch (e) {
       console.error("Polling error:", e);
     }
   }
 
-  function displayNotes(original, formatted) {
-    const responseDiv = document.getElementById("response");
-
-    const box = document.createElement("div");
-    box.className = "box";
-
-    const origLabel = document.createElement("div");
-    origLabel.className = "label";
-    origLabel.textContent = "Original:";
-    box.appendChild(origLabel);
-
-    const origText = document.createElement("div");
-    origText.textContent = original;
-    box.appendChild(origText);
-
-    const formattedLabel = document.createElement("div");
-    formattedLabel.className = "label";
-    formattedLabel.textContent = "Formatted:";
-    box.appendChild(formattedLabel);
-
-    const formattedText = document.createElement("div");
-    formattedText.textContent = formatted;
-    box.appendChild(formattedText);
-
-    responseDiv.prepend(box); // newest notes on top
-  }
-
-  // Poll every 2 seconds
+  // Start polling every 2 seconds
   setInterval(pollForNotes, 2000);
-  pollForNotes(); // initial load
+  pollForNotes(); // initial fetch
 </script>
 
 </body>
