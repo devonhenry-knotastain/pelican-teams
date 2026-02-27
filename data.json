@@ -1,5 +1,25 @@
 {
-  "original": "Raw voice note from phone, thiie",
-  "text": "Formatted voice note",
-  "updated": "2026-02-27T14:46:27.687Z"
+  "name": "data.json",
+  "path": "data.json",
+  "sha": "7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
+  "size": 127,
+  "url": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/contents/data.json?ref=main",
+  "html_url": "https://github.com/devonhenry-knotastain/pelican-teams/blob/main/data.json",
+  "git_url": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
+  "download_url": "https://raw.githubusercontent.com/devonhenry-knotastain/pelican-teams/main/data.json",
+  "type": "file",
+  "content": "ewogICJvcmlnaW5hbCI6ICJSYXcgdm9pY2Ugbm90ZSBmcm9tIHBob25lLCB0\naGlpZSIsCiAgInRleHQiOiAiRm9ybWF0dGVkIHZvaWNlIG5vdGUiLAogICJ1\ncGRhdGVkIjogIjIwMjYtMDItMjdUMTQ6NDY6MjcuNjg3WiIKfQ==\n",
+  "encoding": "base64",
+  "_links": {
+    "self": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/contents/data.json?ref=main",
+    "git": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
+    "html": "https://github.com/devonhenry-knotastain/pelican-teams/blob/main/data.json"
+  },
+  "1BN6DE2R": [
+    {
+      "original": "This is a test",
+      "text": "This is an AI Test",
+      "updated": "2026-02-27T14:59:03.486Z"
+    }
+  ]
 }
