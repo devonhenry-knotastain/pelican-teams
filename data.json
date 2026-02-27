@@ -1,25 +1,25 @@
 {
   "name": "data.json",
   "path": "data.json",
-  "sha": "7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
-  "size": 127,
+  "sha": "d23c600344da360cf62c741642f1a25f4e27ad15",
+  "size": 1283,
   "url": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/contents/data.json?ref=main",
   "html_url": "https://github.com/devonhenry-knotastain/pelican-teams/blob/main/data.json",
-  "git_url": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
+  "git_url": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/d23c600344da360cf62c741642f1a25f4e27ad15",
   "download_url": "https://raw.githubusercontent.com/devonhenry-knotastain/pelican-teams/main/data.json",
   "type": "file",
-  "content": "ewogICJvcmlnaW5hbCI6ICJSYXcgdm9pY2Ugbm90ZSBmcm9tIHBob25lLCB0\naGlpZSIsCiAgInRleHQiOiAiRm9ybWF0dGVkIHZvaWNlIG5vdGUiLAogICJ1\ncGRhdGVkIjogIjIwMjYtMDItMjdUMTQ6NDY6MjcuNjg3WiIKfQ==\n",
+  "content": "ewogICJuYW1lIjogImRhdGEuanNvbiIsCiAgInBhdGgiOiAiZGF0YS5qc29u\nIiwKICAic2hhIjogIjdmZGJhMGYxMzA3YjRkYWE3NzlhNjVjM2E3ZmQwZjZk\nZWYwM2I0OTIiLAogICJzaXplIjogMTI3LAogICJ1cmwiOiAiaHR0cHM6Ly9h\ncGkuZ2l0aHViLmNvbS9yZXBvcy9kZXZvbmhlbnJ5LWtub3Rhc3RhaW4vcGVs\naWNhbi10ZWFtcy9jb250ZW50cy9kYXRhLmpzb24/cmVmPW1haW4iLAogICJo\ndG1sX3VybCI6ICJodHRwczovL2dpdGh1Yi5jb20vZGV2b25oZW5yeS1rbm90\nYXN0YWluL3BlbGljYW4tdGVhbXMvYmxvYi9tYWluL2RhdGEuanNvbiIsCiAg\nImdpdF91cmwiOiAiaHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy9kZXZv\nbmhlbnJ5LWtub3Rhc3RhaW4vcGVsaWNhbi10ZWFtcy9naXQvYmxvYnMvN2Zk\nYmEwZjEzMDdiNGRhYTc3OWE2NWMzYTdmZDBmNmRlZjAzYjQ5MiIsCiAgImRv\nd25sb2FkX3VybCI6ICJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5j\nb20vZGV2b25oZW5yeS1rbm90YXN0YWluL3BlbGljYW4tdGVhbXMvbWFpbi9k\nYXRhLmpzb24iLAogICJ0eXBlIjogImZpbGUiLAogICJjb250ZW50IjogImV3\nb2dJQ0p2Y21sbmFXNWhiQ0k2SUNKU1lYY2dkbTlwWTJVZ2JtOTBaU0JtY205\ndElIQm9iMjVsTENCMFxuYUdscFpTSXNDaUFnSW5SbGVIUWlPaUFpUm05eWJX\nRjBkR1ZrSUhadmFXTmxJRzV2ZEdVaUxBb2dJQ0oxXG5jR1JoZEdWa0lqb2dJ\nakl3TWpZdE1ESXRNamRVTVRRNk5EWTZNamN1TmpnM1dpSUtmUT09XG4iLAog\nICJlbmNvZGluZyI6ICJiYXNlNjQiLAogICJfbGlua3MiOiB7CiAgICAic2Vs\nZiI6ICJodHRwczovL2FwaS5naXRodWIuY29tL3JlcG9zL2Rldm9uaGVucnkt\na25vdGFzdGFpbi9wZWxpY2FuLXRlYW1zL2NvbnRlbnRzL2RhdGEuanNvbj9y\nZWY9bWFpbiIsCiAgICAiZ2l0IjogImh0dHBzOi8vYXBpLmdpdGh1Yi5jb20v\ncmVwb3MvZGV2b25oZW5yeS1rbm90YXN0YWluL3BlbGljYW4tdGVhbXMvZ2l0\nL2Jsb2JzLzdmZGJhMGYxMzA3YjRkYWE3NzlhNjVjM2E3ZmQwZjZkZWYwM2I0\nOTIiLAogICAgImh0bWwiOiAiaHR0cHM6Ly9naXRodWIuY29tL2Rldm9uaGVu\ncnkta25vdGFzdGFpbi9wZWxpY2FuLXRlYW1zL2Jsb2IvbWFpbi9kYXRhLmpz\nb24iCiAgfSwKICAiMUJONkRFMlIiOiBbCiAgICB7CiAgICAgICJvcmlnaW5h\nbCI6ICJUaGlzIGlzIGEgdGVzdCIsCiAgICAgICJ0ZXh0IjogIlRoaXMgaXMg\nYW4gQUkgVGVzdCIsCiAgICAgICJ1cGRhdGVkIjogIjIwMjYtMDItMjdUMTQ6\nNTk6MDMuNDg2WiIKICAgIH0KICBdCn0=\n",
   "encoding": "base64",
   "_links": {
     "self": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/contents/data.json?ref=main",
-    "git": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/7fdba0f1307b4daa779a65c3a7fd0f6def03b492",
+    "git": "https://api.github.com/repos/devonhenry-knotastain/pelican-teams/git/blobs/d23c600344da360cf62c741642f1a25f4e27ad15",
     "html": "https://github.com/devonhenry-knotastain/pelican-teams/blob/main/data.json"
   },
   "1BN6DE2R": [
     {
       "original": "This is a test",
       "text": "This is an AI Test",
-      "updated": "2026-02-27T14:59:03.486Z"
+      "updated": "2026-02-27T15:05:22.914Z"
     }
   ]
 }
