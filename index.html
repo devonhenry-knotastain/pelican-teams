@@ -42,36 +42,65 @@
     if (error) console.error(error);
   });
 
- // Desktop polling webhook URL
-  const webhookPollUrl = "https://n8n.knotastain.com/webhook/poll-notes"; // change to your actual n8n GET webhook
+  // GitHub Pages JSON URL
+  const dataJsonUrl = `${repoBase}data.json?t=${Date.now()}`; // cache-busting with timestamp
+
   let lastText = ""; // track last received note
 
-// Polling code in index.html
-async function pollForNotes() {
-  try {
-    const res = await fetch(`${webhookPollUrl}?session=${encodeURIComponent(sessionToken)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data || !data.text) return;
+  async function pollForNotes() {
+    try {
+      const res = await fetch(`${repoBase}data.json?t=${Date.now()}`);
+      if (!res.ok) return;
+      const data = await res.json();
 
-    const originalText = data.original || data.text;
-    const formattedText = data.text;
+      // Example JSON structure: { "original": "Raw note", "text": "Formatted note" }
+      if (!data || !data.text) return;
 
-    // Avoid duplicates
-    if (formattedText === lastText) return;
-    lastText = formattedText;
+      const originalText = data.original || data.text;
+      const formattedText = data.text;
 
-    displayNotes(originalText, formattedText); // function to show in page
-  } catch (e) {
-    console.error("Polling error:", e);
+      // Avoid duplicates
+      if (formattedText === lastText) return;
+      lastText = formattedText;
+
+      displayNotes(originalText, formattedText); // function to show in page
+    } catch (e) {
+      console.error("Polling error:", e);
+    }
   }
-}
 
-setInterval(pollForNotes, 2000);
-setInterval(pollForNotes, 2000);
+  // Function to display the notes on page
+  function displayNotes(original, formatted) {
+    const responseDiv = document.getElementById("response");
+
+    const box = document.createElement("div");
+    box.className = "box";
+
+    const origLabel = document.createElement("div");
+    origLabel.className = "label";
+    origLabel.textContent = "Original:";
+    box.appendChild(origLabel);
+
+    const origText = document.createElement("div");
+    origText.textContent = original;
+    box.appendChild(origText);
+
+    const formattedLabel = document.createElement("div");
+    formattedLabel.className = "label";
+    formattedLabel.textContent = "Formatted:";
+    box.appendChild(formattedLabel);
+
+    const formattedText = document.createElement("div");
+    formattedText.textContent = formatted;
+    box.appendChild(formattedText);
+
+    responseDiv.prepend(box); // newest notes on top
+  }
 
   // Poll every 2 seconds
   setInterval(pollForNotes, 2000);
+  pollForNotes(); // initial load
+
 </script>
 
 </body>
