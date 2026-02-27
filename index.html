@@ -8,8 +8,6 @@
     #status { font-size: 20px; height: 30px; margin-bottom: 10px; font-weight: bold; }
     .box { background:white; padding:15px; border-radius:8px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); position: relative; text-align:left; white-space: pre-wrap; word-wrap: break-word; }
     .label { font-weight:bold; margin-bottom:5px; }
-    .copyBtn { position:absolute; top:10px; right:10px; background:#ffc107; color:black; padding:5px 10px; font-size:14px; border-radius:4px; cursor:pointer;}
-    .copyBtn:hover { background:#e0a800; }
     #qr { margin-top: 30px; }
     canvas { margin-top: 10px; }
   </style>
@@ -29,39 +27,26 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  // 1️⃣ Generate a unique session token
+  // Generate a unique session token
   const sessionToken = Math.random().toString(36).substring(2,10).toUpperCase();
   document.getElementById("sessionText").innerText = "Session: " + sessionToken;
 
-  // 2️⃣ Generate QR code pointing to phone page with session query param
-  const repoBase = "https://devonhenry-knotastain.github.io/pelican-teams/";
-  const phoneUrl = `${repoBase}phone.html?session=${encodeURIComponent(sessionToken)}`;
+  // QR code points to phone.html?session=SESSION_TOKEN
+  const phoneUrl = `phone.html?session=${encodeURIComponent(sessionToken)}`;
+  QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 });
 
-  QRCode.toCanvas(document.getElementById('qrCanvas'), phoneUrl, { width: 200 }, function (error) {
-    if (error) console.error(error);
-  });
-
-  // 3️⃣ GitHub raw URL for data.json
-  const dataJsonUrl = "https://raw.githubusercontent.com/devonhenry-knotastain/pelican-teams/main/data.json";
-
-  // Track notes already displayed by their unique 'updated' timestamp
+  const responseDiv = document.getElementById("response");
   const displayedNotes = new Set();
 
-  // 4️⃣ Poll GitHub every 2 seconds
   async function pollForNotes() {
     try {
-      const res = await fetch(`${dataJsonUrl}?t=${Date.now()}`);
+      const res = await fetch(`/.netlify/functions/notes?session=${encodeURIComponent(sessionToken)}`);
       if (!res.ok) return;
-      const data = await res.json();
-      if (!data || !data[sessionToken]) return; // No notes for this session
-
-      const notes = data[sessionToken];
+      const notes = await res.json();
 
       notes.forEach(note => {
-        if (displayedNotes.has(note.updated)) return; // skip already displayed
+        if (displayedNotes.has(note.updated)) return;
 
-        // Add to page
-        const responseDiv = document.getElementById("response");
         const box = document.createElement("div");
         box.className = "box";
         box.id = note.updated;
@@ -84,19 +69,17 @@
         formattedText.textContent = note.text;
         box.appendChild(formattedText);
 
-        responseDiv.prepend(box); // newest notes on top
+        responseDiv.prepend(box);
         displayedNotes.add(note.updated);
       });
-
     } catch (e) {
       console.error("Polling error:", e);
     }
   }
 
-  // Start polling every 2 seconds
+  // Poll every 2 seconds
   setInterval(pollForNotes, 2000);
-  pollForNotes(); // initial fetch
+  pollForNotes();
 </script>
-
 </body>
 </html>
