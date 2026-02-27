@@ -45,56 +45,27 @@
   const webhookUrl = "https://n8n.knotastain.com/webhook-test/format-message";
   let lastText = ""; // track last received note
 
-  async function pollForNotes() {
-    try {
-      // Fetch formatted note for this session
-      const res = await fetch(`${webhookUrl}?session=${encodeURIComponent(sessionToken)}`);
-      if (!res.ok) return;
+// Polling code in index.html
+async function pollForNotes() {
+  try {
+    const res = await fetch(`${webhookPollUrl}?session=${encodeURIComponent(sessionToken)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.text) return;
 
-      const data = await res.json();
-      if (!data || !data.text) return;
+    const originalText = data.original || data.text;
+    const formattedText = data.text;
 
-      const originalText = data.original || data.text;
-      const formattedText = data.text;
+    // Avoid duplicates
+    if (formattedText === lastText) return;
+    lastText = formattedText;
 
-      // Avoid repeating the same note
-      if (formattedText === lastText) return;
-      lastText = formattedText;
-
-      const responseDiv = document.getElementById("response");
-      responseDiv.innerHTML = ""; // clear previous content
-
-      // Function to create a box with copy button
-      function createBox(label, content) {
-        const box = document.createElement("div");
-        box.className = "box";
-        const lbl = document.createElement("div");
-        lbl.className = "label";
-        lbl.innerText = label;
-        const pre = document.createElement("pre");
-        pre.style.margin = "0";
-        pre.innerText = content;
-
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "copyBtn";
-        copyBtn.innerText = "📋 Copy";
-        copyBtn.onclick = () => {
-          navigator.clipboard.writeText(content).then(()=>alert("Copied!"));
-        };
-
-        box.appendChild(lbl);
-        box.appendChild(pre);
-        box.appendChild(copyBtn);
-        return box;
-      }
-
-      responseDiv.appendChild(createBox("Original Note:", originalText));
-      responseDiv.appendChild(createBox("AI Formatted Note:", formattedText));
-
-    } catch(e) {
-      console.error("Polling error:", e);
-    }
+    displayNotes(originalText, formattedText); // function to show in page
+  } catch (e) {
+    console.error("Polling error:", e);
   }
+}
+setInterval(pollForNotes, 2000);
 
   // Poll every 2 seconds
   setInterval(pollForNotes, 2000);
