@@ -130,31 +130,41 @@
     startListening();
   });
 
-  sendButton.addEventListener("click", async () => {
-    const textToSend = textArea.value.trim();
-    if (!textToSend) {
-      alert("No text to send!");
-      return;
-    }
+sendButton.addEventListener("click", async () => {
+  const textToSend = textArea.value.trim();
+  if (!textToSend) {
+    alert("No text to send!");
+    return;
+  }
 
-    try {
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: textToSend,
-          session: sessionToken
-        })
-      });
-      statusDiv.innerText = "✅ Sent to n8n!";
-      currentText += textToSend + "\n"; // keep current text for further dictation
-      // Keep listening if it was already listening
-      if (!listening) startListening();
-    } catch (err) {
-      console.error(err);
-      statusDiv.innerText = "❌ Error sending to n8n";
-    }
-  });
+  // 🔴 ALWAYS stop listening when sending
+  if (listening) {
+    stopListening();
+  }
+
+  // Clear silence timer
+  if (silenceTimer) clearTimeout(silenceTimer);
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: textToSend,
+        session: sessionToken
+      })
+    });
+
+    statusDiv.innerText = "✅ Sent to n8n!";
+    
+    // Do NOT restart listening
+    // Just keep the text as-is unless you want to clear it
+
+  } catch (err) {
+    console.error(err);
+    statusDiv.innerText = "❌ Error sending to n8n";
+  }
+});
 </script>
 
 </body>
