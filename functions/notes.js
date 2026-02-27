@@ -1,31 +1,21 @@
-let sessions = {}; // In-memory storage, cleared on redeploy
+let sessions = {}; // in-memory store
 
-export async function handler(event, context) {
-  const { httpMethod } = event;
-
-  if (httpMethod === "POST") {
-    // Receive note from phone
+export async function handler(event) {
+  if (event.httpMethod === "POST") {
     const body = JSON.parse(event.body);
     const { session, original, text } = body;
+    if (!session || !original || !text) return { statusCode: 400, body: "Missing fields" };
 
-    if (!session || !original || !text) {
-      return { statusCode: 400, body: "Missing session or note fields" };
-    }
-
-    const newNote = { original, text, updated: new Date().toISOString() };
     sessions[session] = sessions[session] || [];
-    sessions[session].unshift(newNote); // newest first
+    sessions[session].unshift({ original, text, updated: new Date().toISOString() });
 
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   }
 
-  if (httpMethod === "GET") {
-    // Return notes for a specific session
+  if (event.httpMethod === "GET") {
     const session = event.queryStringParameters?.session;
-    if (!session) return { statusCode: 400, body: "Missing session query" };
-
-    const notes = sessions[session] || [];
-    return { statusCode: 200, body: JSON.stringify(notes) };
+    if (!session) return { statusCode: 400, body: "Missing session" };
+    return { statusCode: 200, body: JSON.stringify(sessions[session] || []) };
   }
 
   return { statusCode: 405, body: "Method not allowed" };
